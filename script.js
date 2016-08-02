@@ -1,9 +1,12 @@
 Handlebars.registerHelper('getAge', function(bdate) {
 	if(!bdate) return;
-	bdate = bdate.split('.');
-	bdate = new Date(`${bdate[2]}-${bdate[1]}-${bdate[0]}`);
-	return (Date.now() - bdate)/31536000000>>0;
+	return (Date.now() - parseToDate(bdate))/31536000000>>0;
 });
+
+function parseToDate(bdate) {
+	let date = bdate.split('.');
+	return new Date(`${date[2]}-${date[1]}-${date[0]}`);
+};
 
 new Promise (resolve => {
 	document.readyState === 'complete' ? resolve() : window.onload = resolve;
@@ -36,11 +39,10 @@ new Promise (resolve => {
 				reject(new Error(response.error.error_msg));
 			else{
 				console.log('GET FRIENDS LIST');
-				console.log(friendsList);
 
 				let source = friendPostTemplate.innerHTML;
 				let tamplateFn = Handlebars.compile(source);
-				let tamplate = tamplateFn({list: friendsList.response});
+				let tamplate = tamplateFn({list: sortFriendsList(friendsList.response)});
 
 				friendsListContainer.innerHTML = tamplate;
 
@@ -51,3 +53,12 @@ new Promise (resolve => {
 }).catch(function(e) {
 	alert(`Ошибка: ${e.message}`);
 });
+
+function sortFriendsList(friendsList) {
+	friendsList.sort((a,b)=>{
+		if(!a.bdate) return 1;
+		if(!b.bdate) return -1;
+		return parseToDate(b.bdate)-parseToDate(a.bdate);
+	});
+	return friendsList;
+};
